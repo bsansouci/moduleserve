@@ -99,6 +99,22 @@ ModuleServer.prototype.resolveModule = function(path) {
   try { resolved = unwin(module_._resolveFilename(modPath, dummyMod)) }
   catch(e) { return null }
 
+  // @hack heuristic to know when we should actually find the browser version of the JS file.
+  if (/\.node\./.test(modPath)) {
+    var pathToPackagejson = modPath
+    var packagejson;
+    while(!packagejson) {
+      try {
+        packagejson = require(module_._resolveFilename(pth.join(pathToPackagejson, 'package.json'), dummyMod))
+      } catch(e) {
+        pathToPackagejson = pth.dirname(pathToPackagejson)
+      }
+    }
+
+    try { resolved = unwin(module_._resolveFilename(pth.join(pathToPackagejson, packagejson.browser), dummyMod)) }
+    catch(e) { return null }
+  }
+
   // Handle builtin modules resolving to strings like "fs", try again
   // with slash which makes it possible to locally install an equivalent.
   if (resolved.indexOf("/") == -1) {
