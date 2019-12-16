@@ -8,6 +8,9 @@ function ModuleServer(options) {
   this.cache = Object.create(null)
   this.nextTag = 0
   this.clientJS = fs.readFileSync(__dirname + "/client.js", "utf8")
+  if (options.blacklist !== undefined) {
+    this.clientJS = this.clientJS.replace(/\%BLACKLIST_HACK\%/, JSON.stringify(options.blacklist))
+  }
   // A map of module paths to the module's filesystem path.
   this.resolved = Object.create(null)
 

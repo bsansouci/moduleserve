@@ -32,6 +32,7 @@
 
   // A cache of resolved module paths.
   var resolved = Object.create(null)
+  var blacklist = %BLACKLIST_HACK%;
 
   // A module, which can load submodules.
   function Module(path, base) {
@@ -45,10 +46,21 @@
       if (name in loaded) return loaded[name]
       // Modify the module path for the request,
       // changing up one directory ("..") to "__".
-      var resp = get(base + name.replace(/(^|\/)\.\.(?=$|\/)/g, "$1__").replace(/\.js$/, ""))
+      var newName = name.replace(/(^|\/)\.\.(?=$|\/)/g, "$1__");
+      var tmp = newName.split('/')
+      if (/\.css$/.test(tmp)) {
+        console.warn("Skipping CSS for:", newName);
+        return loaded[newName] = 0;
+      }
+      if (blacklist.indexOf(tmp[tmp.length - 1]) === -1) {
+        newName = newName.replace(/\.js$/, "")
+      }
+
+      var resp = get(base + newName)
       var resolvedName = resp.url.match(/.*?\/moduleserve\/mod(\/.*)/)[1].replace(/(^|\/)__(?=$|\/)/g, "$1..")
       if (resolvedName != name) resolved[name] = resolvedName
       name = resolvedName
+
       if (name in loaded) return loaded[name]
       if (/\.json$/.test(name))
         return loaded[name] = JSON.parse(resp.content)

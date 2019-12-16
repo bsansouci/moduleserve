@@ -9,12 +9,14 @@ function usage() {
   process.exit(1)
 }
 
+var blacklist = []
 for (var i = 2; i < process.argv.length; i++) {
   var arg = process.argv[i], next = process.argv[i + 1]
   if (arg == "--port" && next) { port = +next; i++ }
   else if (arg == "--host" && next) { host = next; i++ }
   else if (arg == "--transform" && next) { transform = next; i++ }
   else if (arg == "--spa") { spaMode = true; i++ }
+  else if (arg === "--skip") { blacklist =  process.argv[i + 1].split(','); i+=2;}
   else if (dir == "." && arg[0] != "-") dir = arg
   else usage()
 }
@@ -29,7 +31,7 @@ if (transform) {
 }
 
 var static = require("serve-static")(root)
-var moduleServer = new ModuleServer({root: root, transform: transform}).handleRequest
+var moduleServer = new ModuleServer({root: root, transform: transform, blacklist: blacklist}).handleRequest
 
 // Create the server that listens to HTTP requests
 // and returns module contents.
