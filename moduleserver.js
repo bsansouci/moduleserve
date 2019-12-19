@@ -1,5 +1,6 @@
 var module_ = require("module"), pth = require("path"), fs = require("fs")
 var url_ = require("url")
+var child_process = require('child_process')
 
 function ModuleServer(options) {
   this.root = unwin(options.root)
@@ -11,6 +12,9 @@ function ModuleServer(options) {
   if (options.blacklist !== undefined) {
     this.clientJS = this.clientJS.replace(/\%BLACKLIST_HACK\%/, JSON.stringify(options.blacklist))
   }
+      
+  this.mainModule = options.mainModule
+  this.packerCommand = options.packerCommand
   // A map of module paths to the module's filesystem path.
   this.resolved = Object.create(null)
 
@@ -50,6 +54,13 @@ ModuleServer.prototype.handleRequest = function(req, resp) {
     this.resolved[path] = found
   }
 
+  if (this.packerCommand && found === this.mainModule) {
+    child_process.execSync(this.packerCommand, {
+      stdio: 'inherit',
+      root: this.root
+    });
+  }
+
   if (found != path) {
     if (!(found in this.resolved)) this.resolved[found] = found
     if (found != path + ".js") {
@@ -62,7 +73,7 @@ ModuleServer.prototype.handleRequest = function(req, resp) {
   }
 
   var cached = this.cache[found]
-  if (cached) {
+  if (found !== this.mainModule && cached) {
     var noneMatch = req.headers["if-none-match"]
     if (noneMatch && noneMatch.indexOf(cached.headers.etag) > -1) send(304, null)
     else send(200, cached.content, cached.headers)
