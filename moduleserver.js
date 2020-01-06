@@ -111,7 +111,7 @@ ModuleServer.prototype.resolveModule = function(path) {
   catch(e) { return null }
 
   // @hack heuristic to know when we should actually find the browser version of the JS file.
-  if (/\.node\./.test(modPath)) {
+  if (/[\.-]node\./.test(resolved)) {
     var pathToPackagejson = modPath
     var packagejson;
     while(!packagejson) {
